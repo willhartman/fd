@@ -29,7 +29,7 @@
 				<tr>
 					<td cellpadding="2px" valign="middle" style="padding-left: 40px;padding-top: 10px; padding-bottom:10px">+ {{ option.Name }}</td>
 					<td cellpadding="2px" valign="middle">{{ option.Price }}</td>
-					{% if item.MenuItemUI.Barcode %}
+					{% if option.Barcode %}
 						<td cellpadding="2px" valign="middle">
 							<img style="margin-left: 14px;margin-left: 9px;padding-top: 10px; padding-bottom:10px" src="cid:{{ option.Barcode }}.png"/>
 						</td>
