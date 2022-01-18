@@ -44,7 +44,7 @@ namespace Flipdish.Recruiting.WebhookReceiver
 
             string domain = SettingsService.Flipdish_DomainWithScheme;
             int orderId = _order.OrderId.Value;
-            string mapUrl = String.Empty;
+            string mapUrl = string.Empty;
             string staticMapUrl = String.Empty;
             double? airDistance = null;
             string supportNumber = SettingsService.RestaurantSupportNumber;
@@ -464,33 +464,33 @@ namespace Flipdish.Recruiting.WebhookReceiver
             }
         }
 
-        private string GetLineDivider()
-        {
-            StringBuilder result = new StringBuilder();
+        //private string GetLineDivider()
+        //{
+        //    StringBuilder result = new StringBuilder();
 
-            result.AppendLine("<tr>");
-            result.AppendLine("<td colspan=\"2\" align =\"center\" valign=\"top\">");
-            result.AppendLine("<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" align=\"center\" style=\"height: 1px; background-color: rgb(186, 186, 186);\">");
-            result.AppendLine("</table>");
-            result.AppendLine("</td>");
-            result.AppendLine("</tr>");
+        //    result.AppendLine("<tr>");
+        //    result.AppendLine("<td colspan=\"2\" align =\"center\" valign=\"top\">");
+        //    result.AppendLine("<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" align=\"center\" style=\"height: 1px; background-color: rgb(186, 186, 186);\">");
+        //    result.AppendLine("</table>");
+        //    result.AppendLine("</td>");
+        //    result.AppendLine("</tr>");
 
-            return result.ToString();
-        }
+        //    return result.ToString();
+        //}
 
-        private string GetSpaceDivider()
-        {
-            StringBuilder result = new StringBuilder();
+        //private string GetSpaceDivider()
+        //{
+        //    StringBuilder result = new StringBuilder();
 
-            result.AppendLine("<tr>");
-            result.AppendLine("<td colspan=\"2\" align =\"center\" valign=\"top\">");
-            result.AppendLine("<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" align=\"center\" style=\"height: 22px;\">");
-            result.AppendLine("</table>");
-            result.AppendLine("</td>");
-            result.AppendLine("</tr>");
+        //    result.AppendLine("<tr>");
+        //    result.AppendLine("<td colspan=\"2\" align =\"center\" valign=\"top\">");
+        //    result.AppendLine("<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" align=\"center\" style=\"height: 22px;\">");
+        //    result.AppendLine("</table>");
+        //    result.AppendLine("</td>");
+        //    result.AppendLine("</tr>");
 
-            return result.ToString();
-        }
+        //    return result.ToString();
+        //}
 
         public void Dispose()
         {
