@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Flipdish.Recruiting.WebhookReceiver.Models;
-using System.Collections.Generic;
 
 namespace Flipdish.Recruiting.WebhookReceiver
 {
@@ -17,93 +16,79 @@ namespace Flipdish.Recruiting.WebhookReceiver
     {
         [FunctionName("WebhookReceiver")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req,
             ILogger log,
             ExecutionContext context)
         {
-            int? orderId = null;
             try
             {
                 log.LogInformation("C# HTTP trigger function processed a request.");
 
-                OrderCreatedWebhook orderCreatedWebhook;
+                // Deserialize the request body into an OrderCreatedWebhook
+                var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var orderCreatedWebhook = JsonConvert.DeserializeObject<OrderCreatedWebhook>(requestBody);
 
-                string test = req.Query["test"];
-                if(req.Method == "GET" && !string.IsNullOrEmpty(test))
-                {
+                // OrderCreatedEvent
+                var orderCreatedEvent = orderCreatedWebhook.Body;
+ 
+                // StoreIds
+                var storeIds = req.Query["storeId"].ToArray().Select(x => int.TryParse(x, out var storeId) ? storeId : -1);
 
-                    var templateFilePath = Path.Combine(context.FunctionAppDirectory, "TestWebhooks", test);
-                    var testWebhookJson = new StreamReader(templateFilePath).ReadToEnd();
+                // Currency
+                Enum.TryParse(typeof(Currency), req.Query["currency"].FirstOrDefault().ToUpper(), out object currencyObject);
+                var currency = (Currency)currencyObject;
 
-                    orderCreatedWebhook = JsonConvert.DeserializeObject<OrderCreatedWebhook>(testWebhookJson);
-                }
-                else if (req.Method == "POST")
-                {
-                    string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                    orderCreatedWebhook = JsonConvert.DeserializeObject<OrderCreatedWebhook>(requestBody);
-                }
-                else
-                {
-                    throw new Exception("No body found or test param.");
-                }
-                OrderCreatedEvent orderCreatedEvent = orderCreatedWebhook.Body;
+                // Metadata Key
+                var metadataKey = req.Query["metadataKey"].First();
 
-                orderId = orderCreatedEvent.Order.OrderId;
-                List<int> storeIds = new List<int>();
-                string[] storeIdParams = req.Query["storeId"].ToArray();
-                if (storeIdParams.Length > 0)
-                {
-                    foreach (var storeIdString in storeIdParams)
-                    {
-                        int storeId = 0;
-                        try 
-                        {
-                            storeId = int.Parse(storeIdString);
-                        }
-                        catch(Exception) {}
-                        
-                        storeIds.Add(storeId);
-                    }
+                // To
+                var to = req.Query["to"];
 
-                    if (!storeIds.Contains(orderCreatedEvent.Order.Store.Id.Value))
-                    {
-                        log.LogInformation($"Skipping order #{orderId}");
-                        return new ContentResult { Content = $"Skipping order #{orderId}", ContentType = "text/html" };
-                    }
-                }
+                // Setup the EmailRenderer
+                // TODO: Looks like EmailRenderer could be static
+                var emailRenderer = new EmailRenderer(
+                    orderCreatedEvent.Order,
+                    orderCreatedEvent.AppId,
+                    metadataKey,
+                    context.FunctionAppDirectory,
+                    log,
+                    currency
+                 );
 
-
-                Currency currency = Currency.EUR;
-                var currencyString = req.Query["currency"].FirstOrDefault();
-                if(!string.IsNullOrEmpty(currencyString) && Enum.TryParse(typeof(Currency), currencyString.ToUpper(), out object currencyObject))
-                {
-                    currency = (Currency)currencyObject;
-                }
-
-                var barcodeMetadataKey = req.Query["metadataKey"].First() ?? "eancode";
-
-                using EmailRenderer emailRenderer = new EmailRenderer(orderCreatedEvent.Order, orderCreatedEvent.AppId, barcodeMetadataKey, context.FunctionAppDirectory, log, currency);
-                
+                // Render the order email
+                // TODO: We should only be calling one service here in the webhook - this is too much business logic
                 var emailOrder = emailRenderer.RenderEmailOrder();
 
-                try
-                {
-                    EmailService.Send("", req.Query["to"], $"New Order #{orderId}", emailOrder, emailRenderer._imagesWithNames);
-                }
-                catch(Exception ex)
-                {
-                    log.LogError($"Error occured during sending email for order #{orderId}" + ex);
-                }
-
-                log.LogInformation($"Email sent for order #{orderId}.", new { orderCreatedEvent.Order.OrderId });
+                // Send the Email
+                // TODO: Untangle EmailService and EmailRenderer
+                // TODO: We should only be calling one service here in the webhook - this is too much business logic
+                await EmailService.Send("", to, $"New Order #{orderCreatedEvent.Order.OrderId}", emailOrder, emailRenderer._imagesWithNames);
 
                 return new ContentResult { Content = emailOrder, ContentType = "text/html" };
             }
             catch(Exception ex)
             {
-                log.LogError(ex, $"Error occured during processing order #{orderId}");
+                log.LogError(ex, $"Error occured during processing order"); // TODO:  #{orderId}
                 throw ex;
             }
         }
     }
 }
+
+//  TODO: This business logic needs moving to the service
+//
+//  default metadatakey... ?? "eancode";
+
+// This is all business logic - belongs in service
+//var orderId = orderCreatedEvent.Order.OrderId;
+//if (!storeIds.Contains(orderCreatedEvent.Order.Store.Id.Value))
+//{
+//    log.LogInformation($"Skipping order #{orderId}");
+//    return new ContentResult { Content = $"Skipping order #{orderId}", ContentType = "text/html" };
+//}
+
+//Currency currency = Currency.EUR;
+//if(!string.IsNullOrEmpty(currencyString) && Enum.TryParse(typeof(Currency), currencyString.ToUpper(), out object currencyObject))
+//{
+//    currency = (Currency)currencyObject;
+//}

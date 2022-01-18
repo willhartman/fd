@@ -1,0 +1,42 @@
+﻿<table>
+	<tr>
+		<td cellpadding="2px" valign="top" style="font-weight: bold;">Order items</td>
+		<td cellpadding="2px" valign="top"></td>
+	</tr>
+	{% render "SpaceDividerPartial" %}
+	{% for section in sectionsGrouped %}
+		<tr>
+			<td cellpadding="2px" valign="top" style="font-size: 14px;">{{ section.Name }}</td>
+			<td cellpadding="2px" valign="top" style="font-size: 14px;"></td>
+		</tr>
+		{% render "LineDividerPartial" %}
+		{% render "SpaceDividerPartial" %}
+		{% for item in section.MenuItemsGroupedList %}
+			<tr>
+				<td cellpadding="2px" valign="middle" style="padding-left: 40px;">{{ item.Count }}{item.MenuItemUI.Name}</td>
+				<td cellpadding="2px" valign="middle">{{ item.Price }}</td>
+				{% if item.MenuItemUI.Barcode %}
+					<td cellpadding="2px" valign="middle">
+						<img style="margin-left: 14px;margin-left: 9px;padding-top: 10px; padding-bottom:10px" src="cid:{{ item.MenuItemUI.Barcode }}.png"/>
+					</td>
+				{% endif %}
+				{% if item.Count > 1 %}
+					<td cellpadding="2px" valign="middle" style="font-size:40px">x</td>
+					<td cellpadding="2px" valign="middle" style="font-size:50px">{item.Count}</td>
+				{% endif %}
+			</tr>
+			{% for option in item.MenuItemUI.MenuOptions %}
+				<tr>
+					<td cellpadding="2px" valign="middle" style="padding-left: 40px;padding-top: 10px; padding-bottom:10px">+ {{ option.Name }}</td>
+					<td cellpadding="2px" valign="middle">{{ option.Price }}</td>
+					{% if option.Barcode %}
+						<td cellpadding="2px" valign="middle">
+							<img style="margin-left: 14px;margin-left: 9px;padding-top: 10px; padding-bottom:10px" src="cid:{{ option.Barcode }}.png"/>
+						</td>
+					{% endif %}
+				</tr>
+			{% endfor %}
+		{% endfor %}
+		{% render "SpaceDividerPartial" %}
+	{% endfor %}
+</table>
